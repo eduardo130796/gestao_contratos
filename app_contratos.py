@@ -780,7 +780,7 @@ with aba1:
                 if sel in campo or campo in sel:
                     return True
             return False
-
+        df_ativos_filtrado = df_filtrado[(df_filtrado["STATUS"] == 'Ativo')]
         df_unidade = df_ativos_filtrado[df_ativos_filtrado["UNIDADE"].apply(unidade_bate)]
         
         resumo_objetos = df_unidade.groupby("OBJETO")["VALOR ANUAL ATUAL"].sum().reset_index()
@@ -819,7 +819,7 @@ with aba1:
         st.markdown("##### 🏢 Comparativo de Valor Anual por Unidade para o(s) Objeto(s) Selecionado(s)")
         
         #df_objeto = df_contratos_unicos[df_contratos_unicos["OBJETO"].isin(objetos_selecionados)]
-
+        df_ativos_filtrado = df_filtrado[(df_filtrado["STATUS"] == 'Ativo')]
         regex_pattern = r'\b(' + '|'.join([re.escape(obj) for obj in objetos_selecionados]) + r')\b'
         if modo_visao == "Focar no Objeto": 
             df_objeto = df_ativos_filtrado[df_ativos_filtrado["OBJETO"].str.contains(regex_pattern, case=False, na=False)]
