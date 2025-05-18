@@ -30,7 +30,23 @@ from reportlab.lib.enums import TA_CENTER
 import io
 import base64
 
+
 st.set_page_config(page_title="Gestão de Contratos", layout="wide", page_icon="1dd529a8-a1b8-4c15-8bae-4fbc3caacc13.png")
+
+hide_streamlit_style = """
+    <style>
+    /* Esconde o menu do canto superior direito */
+    #MainMenu {visibility: hidden;}
+    /* Esconde o rodapé */
+    footer {visibility: hidden;}
+    /* Opcional: esconde o banner superior "Made with Streamlit" */
+    header {visibility: hidden;}
+    </style>
+"""
+
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+
 # Coloca uma imagem pequena e discreta na sidebar
 st.sidebar.image("1dd529a8-a1b8-4c15-8bae-4fbc3caacc13.png", width=150)
 # Função para carregar e preparar os dados
