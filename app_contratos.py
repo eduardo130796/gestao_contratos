@@ -35,7 +35,7 @@ st.set_page_config(page_title="Gestão de Contratos", layout="wide")
 # Função para carregar e preparar os dados
 @st.cache_data
 def carregar_dados():
-    url = "https://github.com/eduardo130796/gestao_contratos/blob/main/RELATORIO%20DE%20CONTRATOS%20VIGENTES%202025%20(1).xlsx"
+    url = "https://raw.githubusercontent.com/eduardo130796/gestao_contratos/main/RELATORIO%20DE%20CONTRATOS%20VIGENTES%202025%20(1).xlsx"
     df = pd.read_excel(url)
     #df = pd.read_excel("RELATORIO DE CONTRATOS VIGENTES 2025 (1).xlsx")  # nome do seu arquivo
 
