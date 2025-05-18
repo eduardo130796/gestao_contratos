@@ -1352,14 +1352,20 @@ with aba2:
             return df
 
             
-        # Função para verificar se houve mudança nos filtros
         def filtros_mudaram():
             filtros = {
                 "mostrar_entradas": mostrar_entradas,
-                "selecionados_entrada": tuple(selecionados_entrada),  # tupla para poder comparar
-                "faixas_selecionadas": tuple(faixas_selecionadas)
+                "selecionados_entrada": tuple(selecionados_entrada),  # se ainda existir esse filtro
+                "faixas_selecionadas": tuple(faixas_selecionadas),    # idem
+
+                # Novos filtros
+                "regioes_selecionadas": tuple(regioes_selecionadas),
+                "unidades_selecionadas": tuple(unidades_selecionadas),
+                "contratos_selecionados": tuple(contratos_selecionados),
+                "objetos_selecionados": tuple(objetos_selecionados),
+                "modo_visao": modo_visao
             }
-            # Compara com o que está salvo
+
             if "filtros_salvos" not in st.session_state:
                 st.session_state["filtros_salvos"] = filtros
                 return True
