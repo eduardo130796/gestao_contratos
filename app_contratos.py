@@ -30,8 +30,9 @@ from reportlab.lib.enums import TA_CENTER
 import io
 import base64
 
-st.set_page_config(page_title="Gestão de Contratos", layout="wide")
-
+st.set_page_config(page_title="Gestão de Contratos", layout="wide", page_icon="1dd529a8-a1b8-4c15-8bae-4fbc3caacc13.png")
+# Coloca uma imagem pequena e discreta na sidebar
+st.sidebar.image("1dd529a8-a1b8-4c15-8bae-4fbc3caacc13.png", width=150)
 # Função para carregar e preparar os dados
 @st.cache_data
 def carregar_dados():
@@ -945,9 +946,9 @@ with aba2:
                     # Certifica que é inteiro e >= 0
                     dias_restantes = max(int(dias_restantes), 0)
                     dias_txt = f"{dias_restantes} dias"
-                valor_mensal = f"R$ {row['VALOR ATUAL MENSAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                valor_anual = f"R$ {row['VALOR ANUAL ATUAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                valor_global = f"R$ {row['VALOR GLOBAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                #valor_mensal = f"R$ {row['VALOR ATUAL MENSAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                #valor_anual = f"R$ {row['VALOR ANUAL ATUAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+                #valor_global = f"R$ {row['VALOR GLOBAL']:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
                 # Lista itens objeto
                 itens_objeto = [item.strip() for item in str(row['OBJETO']).split('/') if item.strip()]
@@ -959,9 +960,9 @@ with aba2:
                 # Valores formatados em coluna à direita com mais espaço e espaçamento vertical
                 valores_html = f"""
                     <div style="font-size: 13px; color: #444; line-height: 1.5; display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                        <div>💰 <b>Mensal:</b> {valor_mensal}</div>
-                        <div>📈 <b>Anual:</b> {valor_anual}</div>
-                        <div>💼 <b>Global:</b> {valor_global}</div>
+                        <div>💰 <b>Mensal:</b> {row['VALOR ATUAL MENSAL']}</div>
+                        <div>📈 <b>Anual:</b> {row['VALOR ANUAL ATUAL']}</div>
+                        <div>💼 <b>Global:</b> {row['VALOR GLOBAL']}</div>
                         <div style="color: {cor}; font-weight: bold; margin-top: 6px;">🏷️ {tag}</div>
                     </div>
                 """
@@ -996,8 +997,8 @@ with aba2:
     #============
 
     # Função para formatar valores monetários (pt-br)
-    def formatar_valor(valor):
-        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    #def formatar_valor(valor):
+     #   return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
     def gerar_pdf_contratos(df, faixas_selecionadas, tipo_prazo):
         """
@@ -1110,7 +1111,7 @@ with aba2:
 
                 for i, (_, linha) in enumerate(df_faixa.iterrows(), start=1):
                     contrato_str = str(linha['CONTRATO'])
-                    valor_formatado = formatar_valor(linha['VALOR GLOBAL']) if not pd.isna(linha['VALOR GLOBAL']) else ''
+                    valor_formatado = linha['VALOR GLOBAL'] if not pd.isna(linha['VALOR GLOBAL']) else ''
                     dias_valor = str(int(linha['DIAS_PARA_VENCER'])) if not pd.isna(linha['DIAS_PARA_VENCER']) else 'N/A'
 
                     row = [
@@ -1216,7 +1217,8 @@ with aba2:
 
             # Loop dinâmico por faixa
             for faixa, (inicio, fim) in faixas_dict.items():
-                filtrados = df[(df["DIAS_PARA_VENCER"] >= inicio) & (df["DIAS_PARA_VENCER"] <= fim)]
+                filtrados = df.query(f"{inicio} <= DIAS_PARA_VENCER <= {fim}")
+                #filtrados = df[(df["DIAS_PARA_VENCER"] >= inicio) & (df["DIAS_PARA_VENCER"] <= fim)]
                 if not filtrados.empty:
                     cor, emoji, subtitulo = cores_emojis.get(faixa, ("#D3D3D3", "📌", "Prazo indefinido"))
                     st.markdown(f"<br>", unsafe_allow_html=True)
@@ -1265,8 +1267,11 @@ with aba2:
             if not intervalos_entrada:
                 return df.copy()
 
-            max_dias = max(opcoes_intervalos[sel] for sel in intervalos_entrada)
-            filtrados = df[(df['DIAS_DESDE_ENTRADA'] >= 0) & (df['DIAS_DESDE_ENTRADA'] <= max_dias)]
+            mask = pd.Series(False, index=df.index)
+            for sel in intervalos_entrada:
+                limite = opcoes_intervalos[sel]
+                mask |= (df['DIAS_DESDE_ENTRADA'] >= 0) & (df['DIAS_DESDE_ENTRADA'] <= limite)
+            filtrados = df[mask]
             return filtrados
 
         # Filtro por vencimento normal
@@ -1312,7 +1317,55 @@ with aba2:
             intervalos_entrada=selecionados_entrada
         )
 
+        @st.cache_data
+        def preprocessar_df(df):
+            df = df.copy()
+            df['VIGÊNCIA'] = pd.to_datetime(df['VIGÊNCIA'], errors='coerce')
+            df['DIAS_PARA_VENCER'] = df['DIAS_PARA_VENCER'].fillna(-1).astype(int)
+            # Pré-formatar valores para exibição, para evitar refazer depois
+            df['VALOR ATUAL MENSAL'] = df['VALOR ATUAL MENSAL'].apply(
+                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else "R$ 0,00"
+            )
+            df['VALOR ANUAL ATUAL'] = df['VALOR ANUAL ATUAL'].apply(
+                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else "R$ 0,00"
+            )
+            df['VALOR GLOBAL'] = df['VALOR GLOBAL'].apply(
+                lambda x: f"R$ {x:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".") if pd.notna(x) else "R$ 0,00"
+            )
+            # Já filtra só o que importa no começo, se quiser
+            return df
+
+            
+        # Função para verificar se houve mudança nos filtros
+        def filtros_mudaram():
+            filtros = {
+                "mostrar_entradas": mostrar_entradas,
+                "selecionados_entrada": tuple(selecionados_entrada),  # tupla para poder comparar
+                "faixas_selecionadas": tuple(faixas_selecionadas)
+            }
+            # Compara com o que está salvo
+            if "filtros_salvos" not in st.session_state:
+                st.session_state["filtros_salvos"] = filtros
+                return True
+            if st.session_state["filtros_salvos"] != filtros:
+                st.session_state["filtros_salvos"] = filtros
+                return True
+            return False
+
+        # Se filtros mudaram, apaga df_filtrado para recalcular
+        if filtros_mudaram():
+            if "df_filtrado" in st.session_state:
+                del st.session_state["df_filtrado"]
+
+        # Calcula df_filtrado só se não existir no estado
+        if "df_filtrado" not in st.session_state:
+            # Aqui sua função que processa o dataframe
+            st.session_state.df_filtrado = preprocessar_df(df_filtrado)  # seu df original
+
+        df_filtrado = st.session_state.df_filtrado
         # CSS customizado para estilizar e alinhar os botões
+        # Adiciona botão "Gerar Relatório" com o mesmo estilo
+        # Seu estilo CSS para os botões e container
         st.markdown("""
             <style>
                 .buttons-container {
@@ -1336,6 +1389,7 @@ with aba2:
                     display: inline-flex;
                     align-items: center;
                     gap: 4px;
+                    text-decoration: none;
                 }
                 .download-btn:hover {
                     background-color: #e1e7ed;
@@ -1347,78 +1401,73 @@ with aba2:
                 .download-btn svg {
                     width: 18px;
                     height: 18px;
-                    
                 }
             </style>
-            """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-        # Simule a geração do PDF - troque pela sua função real
-        if mostrar_entradas:
-            pdf_buffer = gerar_pdf_contratos(df_filtrado, selecionados_entrada, tipo_prazo='entrada')
-        else:
-            pdf_buffer = gerar_pdf_contratos(df_filtrado, faixas_selecionadas, tipo_prazo='vencimento')
+
+
+        # Colunas para posicionar botão totalmente à direita
+        col1, col2, col3 = st.columns([10, 9, 4])
+        with col3:
+            gerar = st.button("🔄 Gerar Relatório", type="secondary")
         
-        # Geração do Excel
-        colunas_exportar = [
-            'REGIÕES', 'ESTADO', 'UNIDADE', 'OBJETO', 'MODALIDADE DE LICITAÇÃO',
-            'CONTRATADA', 'CNPJ/CPF','VALOR ATUAL MENSAL','VIGÊNCIA','DIAS_PARA_VENCER'
-        ]
-        df_filtrado_excel = filtrar_contratos(
-            df_contratos_unicos,
-            faixas_selecionadas=faixas_selecionadas,
-            entrada_recente=mostrar_entradas,
-            intervalos_entrada=selecionados_entrada
-        )
-        if mostrar_entradas:
-            df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_DESDE_ENTRADA'] >= 0]
-        else:
-            df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_PARA_VENCER'] >= 0]
-            if 'Tudo' in faixas_selecionadas or not faixas_selecionadas:
-                df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_PARA_VENCER'] <= 210]
+        if gerar:      
+            # Exemplo: Sua lógica para gerar pdf_buffer e df_para_excel
+            # Substitua essa parte pelo seu código real para gerar os arquivos
 
-        df_para_excel = df_filtrado_excel[[col for col in colunas_exportar if col in df_filtrado_excel.columns]]
+            # Criar PDF e Excel dummy para exemplo
+            if mostrar_entradas:
+                pdf_buffer = gerar_pdf_contratos(df_filtrado, selecionados_entrada, tipo_prazo='entrada')
+            else:
+                pdf_buffer = gerar_pdf_contratos(df_filtrado, faixas_selecionadas, tipo_prazo='vencimento')
+            colunas_exportar = [
+                'REGIÕES', 'ESTADO', 'UNIDADE', 'OBJETO', 'MODALIDADE DE LICITAÇÃO',
+                'CONTRATADA', 'CNPJ/CPF','VALOR ATUAL MENSAL','VIGÊNCIA','DIAS_PARA_VENCER'
+            ]
+            df_filtrado_excel = df_filtrado.copy()
+            if mostrar_entradas:
+                df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_DESDE_ENTRADA'] >= 0]
+            else:
+                df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_PARA_VENCER'] >= 0]
+                if 'Tudo' in faixas_selecionadas or not faixas_selecionadas:
+                    df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_PARA_VENCER'] <= 210]
 
-        # Transforma buffers em bytes para base64
-        pdf_bytes = pdf_buffer.getvalue() if pdf_buffer else None
+            df_para_excel = df_filtrado_excel[[col for col in colunas_exportar if col in df_filtrado_excel.columns]]
 
-        excel_bytes = None
-        if not df_para_excel.empty:
-            excel_buffer = io.BytesIO()
-            with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
-                df_para_excel.to_excel(writer, index=False, sheet_name="Contratos")
-            excel_buffer.seek(0)
-            excel_bytes = excel_buffer.getvalue()
+            # Convertendo em base64
+            pdf_bytes = pdf_buffer.getvalue() if pdf_buffer else None
+            excel_bytes = None
+            if not df_para_excel.empty:
+                excel_buffer = io.BytesIO()
+                with pd.ExcelWriter(excel_buffer, engine='xlsxwriter') as writer:
+                    df_para_excel.to_excel(writer, index=False, sheet_name="Contratos")
+                excel_buffer.seek(0)
+                excel_bytes = excel_buffer.getvalue()
 
-        # Encode base64
-        pdf_b64 = base64.b64encode(pdf_bytes).decode() if pdf_bytes else None
-        excel_b64 = base64.b64encode(excel_bytes).decode() if excel_bytes else None
+            pdf_b64 = base64.b64encode(pdf_bytes).decode() if pdf_bytes else None
+            excel_b64 = base64.b64encode(excel_bytes).decode() if excel_bytes else None
 
-        # Ícones SVG inline para botões
-        icon_pdf = '''
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8zm4 16H6V4h7v5h5z"/>
-        </svg>'''
+            icon_pdf = '''
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8zm4 16H6V4h7v5h5z"/>
+            </svg>'''
+            icon_excel = '''
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2
+                14h-2l-2-3-2 3H9l2.5-3.5L9 10h2l2 2.5L15 10h2l-2.5 3.5L17 17z"/>
+            </svg>'''
 
-        icon_excel = '''
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2
-            14h-2l-2-3-2 3H9l2.5-3.5L9 10h2l2 2.5L15 10h2l-2.5 3.5L17 17z"/>
-        </svg>'''
-
-        # Renderiza os botões lado a lado e alinhados à direita
-        st.markdown(f'''
-        <div class="buttons-container">
-            {f'<a href="data:application/pdf;base64,{pdf_b64}" download="relatorio_contratos.pdf" class="download-btn">{icon_pdf} Baixar PDF</a>' if pdf_b64 else ''}
-            {f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{excel_b64}" download="{("relatorio_entradas.xlsx" if mostrar_entradas else "relatorio_vencimentos.xlsx")}" class="download-btn">{icon_excel} Baixar Excel</a>' if excel_b64 else ''}
-        </div>
-        ''', unsafe_allow_html=True)
+            st.markdown(f'''
+            <div class="buttons-container">
+                <a href="data:application/pdf;base64,{pdf_b64}" download="relatorio_contratos.pdf" class="download-btn">{icon_pdf} Baixar PDF</a>
+                <a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{excel_b64}" download="relatorio.xlsx" class="download-btn">{icon_excel} Baixar Excel</a>
+            </div>
+            ''', unsafe_allow_html=True)
 
         
-    # Exibe os cards com os contratos filtrados FORA do expander, para manter a separação
-    if not pdf_b64 or not excel_b64:
-        st.info("Nenhum dado encontrado para o filtro escolhido")
-    else:
-        mostrar_todos_cards(df_filtrado, mostrar_entradas, selecionados_entrada, faixas_selecionadas)
+
+    mostrar_todos_cards(df_filtrado, mostrar_entradas, selecionados_entrada, faixas_selecionadas)
 
 
 
@@ -1431,46 +1480,66 @@ with aba2:
 # --- Aba 2: Detalhamento dos Contratos ---
 with aba3:
     st.subheader("📋 Lista de Contratos")
-    # Função PDF
-    # PDF simplificado por região
-    def gerar_pdf_contratos_simples(df, colunas_exibir):
+    # Utilitários
+    def hoje_formatado():
+        return date.today().strftime("%Y-%m-%d")
+
+    def formatar_valor(valor):
+        if pd.isna(valor):
+            return ''
+        return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+    def formatar_data(data):
+        if pd.isna(data):
+            return 'INDETERMINADA'
+        return data.strftime('%d/%m/%Y')
+
+    def formatar_colunas_dataframe(df):
+        df = df.copy()
+        df['DIAS_PARA_VENCER'] = df['DIAS_PARA_VENCER'].apply(lambda x: '-' if pd.isna(x) else int(x))
+
+        for col in df.columns:
+            if col == 'VIGÊNCIA':
+                df[col] = df[col].apply(formatar_data)
+            elif 'VALOR' in col.upper():
+                df[col] = df[col].apply(formatar_valor)
+            elif df[col].dtype == 'datetime64[ns]':
+                df[col] = df[col].dt.strftime('%d/%m/%Y')
+        return df
+
+    # PDF
+    def formatar_cabecalho_pdf(coluna):
+        return coluna.replace("_", " ").title()
+
+    def gerar_pdf_contratos(df, colunas):
         buffer = BytesIO()
-      
+        pdf = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
 
         styles = getSampleStyleSheet()
         style_title = ParagraphStyle('Title', parent=styles['Heading1'], alignment=TA_CENTER, fontSize=14, spaceAfter=14)
+        style_header = ParagraphStyle('Header', fontSize=8, textColor=colors.white, fontName='Helvetica-Bold')
         style_cell = ParagraphStyle('Cell', fontSize=8, leading=10)
 
-        pdf = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
         elementos = []
 
         for regiao in sorted(df['REGIÕES'].dropna().unique()):
-            elementos.append(Paragraph(f"Lista de Contratos - {regiao}", style_title))
-            elementos.append(Spacer(1, 10))
-
-            df_regiao = df[df['REGIÕES'] == regiao][colunas_exibir]
-
+            df_regiao = df[df['REGIÕES'] == regiao][colunas]
             if df_regiao.empty:
                 continue
 
-            tabela_dados = [colunas_exibir]
-            dados_linha = []
-         
-            for i,(_, linha) in enumerate(df_regiao.iterrows(), start=1):
-                row = []
-                for col in colunas_exibir:
-                    valor = linha[col]
-                    if isinstance(valor, pd.Timestamp):
-                        valor = valor.strftime("%d/%m/%Y")
-                    elif isinstance(valor, (int, float)) and 'VALOR' in col.upper():
-                        valor = f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-                    row.append(Paragraph(str(valor), style_cell))
-                tabela_dados.append(row)
-                dados_linha.append(i)
+            elementos += [
+                Paragraph(f"Lista de Contratos - {regiao}", style_title),
+                Spacer(1, 10)
+            ]
 
-            tabela = Table(tabela_dados, repeatRows=1)
+            dados_pdf = [[Paragraph(formatar_cabecalho_pdf(col), style_header) for col in colunas]]
 
-            style = TableStyle([
+            for i, (_, row) in enumerate(df_regiao.iterrows(), start=1):
+                linha_pdf = [Paragraph(str(row[col]), style_cell) for col in colunas]
+                dados_pdf.append(linha_pdf)
+
+            tabela = Table(dados_pdf, repeatRows=1)
+            estilo_tabela = TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor("#003366")),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
@@ -1479,14 +1548,13 @@ with aba3:
                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                 ('GRID', (0, 0), (-1, -1), 0.25, colors.grey),
             ])
-            for i in dados_linha:
-                cor = colors.whitesmoke if i % 2 == 0 else None
-                if cor:
-                    style.add('BACKGROUND', (0, i), (-1, i), cor)
 
-            tabela.setStyle(style)
-            elementos.append(tabela)
-            elementos.append(PageBreak())
+            for idx in range(1, len(dados_pdf)):
+                if idx % 2 == 0:
+                    estilo_tabela.add('BACKGROUND', (0, idx), (-1, idx), colors.whitesmoke)
+
+            tabela.setStyle(estilo_tabela)
+            elementos += [tabela, PageBreak()]
 
         if not elementos:
             return None
@@ -1495,42 +1563,18 @@ with aba3:
         buffer.seek(0)
         return buffer
 
-    # Exportação Excel
     def exportar_para_excel(df, colunas):
         output = BytesIO()
         df[colunas].to_excel(output, index=False)
         output.seek(0)
         return output
-
     # Streamlit App
     #st.header("📋 Exportar Contratos")
     with st.expander("Exportar Contratos",icon='📥'):
 
-        
-        # Base conforme o modo escolhido
-        df_base = df_ativos.copy()
-        df_base['DIAS_PARA_VENCER'] = df_base['DIAS_PARA_VENCER'].apply(
-            lambda x: '-' if pd.isna(x) else int(x)
-        )
+        df_formatado = formatar_colunas_dataframe(df_ativos)
 
-                # Formatando valores e datas (para refletir no Excel também)
-        def formatar_valor(valor):
-            if pd.isna(valor): return ''
-            return f"R$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-        def formatar_data(data):
-            if pd.isna(data): return 'INDETERMINADA'
-
-            return data.strftime('%d/%m/%Y')
-        
-        
-        df_base['VIGÊNCIA'] = df_base['VIGÊNCIA'].apply(formatar_data)
-
-        for col in df_base.columns:
-            if 'VALOR' in col.upper():
-                df_base[col] = df_base[col].apply(formatar_valor)
-            elif df_base[col].dtype == 'datetime64[ns]':
-                df_base[col] = df_base[col].dt.strftime('%d/%m/%Y')
+                # Base conforme o modo escolhido
         # 2. Selecionar colunas com base no DataFrame carregado
         colunas_permitidas = [
             'CONTRATO', 'PROCESSO', 'REGIÕES', 'ESTADO', 'UNIDADE', 'OBJETO', 
@@ -1539,7 +1583,7 @@ with aba3:
             'DIAS_PARA_VENCER', # se quiser mantê-la, com tratamento especial
             # outras colunas específicas que você deseja permitir...
         ]
-        colunas_disponiveis = [col for col in df_base.columns if col in colunas_permitidas]
+        colunas_disponiveis = [col for col in df_formatado.columns if col in colunas_permitidas]
               
         colunas_selecionadas = st.multiselect(
             "Selecione as colunas que deseja exportar:",
@@ -1550,15 +1594,10 @@ with aba3:
         if mostrar_tabela:
             if colunas_selecionadas:
                 st.markdown("### 📋 Tabela de Contratos Vigentes")
-                st.data_editor(df_base[colunas_selecionadas], use_container_width=True, disabled=True)
-        # Gerar os bytes dos arquivos
-        excel_bytes = exportar_para_excel(df_base, colunas_selecionadas)
-        pdf_bytes = gerar_pdf_contratos_simples(df_base, colunas_selecionadas)
-
-                    # Transformando buffers em bytes para base64
-        # Gerar os bytes dos arquivos
-        excel_buffer = exportar_para_excel(df_base, colunas_selecionadas)
-        pdf_buffer = gerar_pdf_contratos_simples(df_base, colunas_selecionadas)
+                st.data_editor(df_formatado[colunas_selecionadas], use_container_width=True, disabled=True)
+        # Gerar arquivos uma única vez
+        pdf_buffer = gerar_pdf_contratos(df_formatado, colunas_selecionadas)
+        excel_buffer = exportar_para_excel(df_formatado, colunas_selecionadas)
 
         # Encode base64
         pdf_b64 = base64.b64encode(pdf_buffer.getvalue()).decode() if pdf_buffer else None
@@ -1633,10 +1672,10 @@ with aba3:
 
 
     # Agrupar por região
-    regioes = df_base['REGIÕES'].dropna().unique()
+    regioes = df_formatado['REGIÕES'].dropna().unique()
 
     for regiao in sorted(regioes):
-        contratos_regiao = df_base[df_base['REGIÕES'] == regiao]
+        contratos_regiao = df_formatado[df_formatado['REGIÕES'] == regiao]
         st.markdown(f"#### 🌎 Região: {regiao}")
 
         linhas = len(contratos_regiao)
@@ -1678,6 +1717,16 @@ with aba3:
                         min-width: 150px;
                         padding: 8px;
                         box-sizing: border-box;
+                    }
+
+                    /* Coluna específica de Objetos (4ª coluna) */
+                    .contract-header > div:nth-child(4),
+                    .contract-row > div:nth-child(4) {
+                        flex: 0 0 320px;
+                        min-width: 320px;
+                        max-width: 450px;
+                        white-space: normal;
+                        word-wrap: break-word;
                     }
                     .contract-cell ul {
                         padding-left: 20px;
