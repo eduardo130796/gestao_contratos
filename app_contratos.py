@@ -257,6 +257,7 @@ if objetos_selecionados:
         )
 
 if st.sidebar.button("Atualizar", type="tertiary"):
+    carregar_dados.clear()
     df = carregar_dados()
 #================
 #
