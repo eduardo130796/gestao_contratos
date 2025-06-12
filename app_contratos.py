@@ -255,6 +255,9 @@ if objetos_selecionados:
             "⚠️ Alguns contratos podem ter múltiplos objetos. Se você precisar de uma análise mais detalhada, "
             "considere visualizar o contrato completo."
         )
+
+if st.sidebar.button("Atualizar", type="tertiary"):
+    df = carregar_dados()
 #================
 #
 # MÉTRICAS INICIAIS
