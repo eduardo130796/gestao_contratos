@@ -1448,7 +1448,7 @@ with aba2:
             else:
                 pdf_buffer = gerar_pdf_contratos(df_filtrado, faixas_selecionadas, tipo_prazo='vencimento')
             colunas_exportar = [
-                'REGIÕES', 'ESTADO', 'UNIDADE', 'OBJETO', 'MODALIDADE DE LICITAÇÃO',
+                'REGIÕES', 'ESTADO', 'UNIDADE','PROCESSO', 'CONTRATO', 'OBJETO', 'MODALIDADE DE LICITAÇÃO',
                 'CONTRATADA', 'CNPJ/CPF','VALOR ATUAL MENSAL','VIGÊNCIA','DIAS_PARA_VENCER'
             ]
             df_filtrado_excel = df_filtrado.copy()
