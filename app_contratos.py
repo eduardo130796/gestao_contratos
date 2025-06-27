@@ -1458,7 +1458,7 @@ with aba2:
                 df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_PARA_VENCER'] >= 0]
                 if 'Tudo' in faixas_selecionadas or not faixas_selecionadas:
                     df_filtrado_excel = df_filtrado_excel[df_filtrado_excel['DIAS_PARA_VENCER'] <= 210]
-
+            print(df_filtrado.columns.tolist())
             df_para_excel = df_filtrado_excel[[col for col in colunas_exportar if col in df_filtrado_excel.columns]]
 
             # Convertendo em base64
