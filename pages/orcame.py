@@ -10,7 +10,7 @@ import re
 import locale
 import streamlit.components.v1 as components
 
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+#locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 # 3. Dicionário de nomes bonitos (para exibição/exportação)
 NOMES_BONITOS = {
     "contrato": "contrato",
