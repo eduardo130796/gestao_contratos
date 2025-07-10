@@ -14,6 +14,9 @@ pages = {
         st.Page("pages/app_contratos.py", title="Painel Contratos", icon="📊"),
         st.Page("pages/orcame.py", title="Painel Orçamentário", icon="📊"),
     ],
+    "Configurações": [
+        st.Page("pages/atualizar_pagamentos_nota.py", title="Configurações", icon="⚙️"),
+    ],
 }
 pg = st.navigation(pages)
 pg.run()
