@@ -326,7 +326,7 @@ def visualizar_empenhos_unicos():
     url_evol = "https://raw.githubusercontent.com/eduardo130796/gestao_contratos/main/relatorio%20evolucao%20mes%20a%20mes.xlsx"
     df_raw = pd.read_excel(url_evol)
     # Define meses e tipos
-    meses = ["JAN/2025", "FEV/2025", "MAR/2025", "ABR/2025","MAI/2025","JUN/2025","JUL/2025","AGO/2025","SET/2025","OUT/2025","NOV/2025","DEZ/2025"]
+    meses = ["JAN/2025", "FEV/2025", "MAR/2025", "ABR/2025","MAI/2025","JUN/2025","JUL/2025"]
     tipos = [
         "DESPESAS EMPENHADAS (CONTROLE EMPENHO)",
         "DESPESAS EMPENHADAS A LIQUIDAR (CONTROLE EMP)",
