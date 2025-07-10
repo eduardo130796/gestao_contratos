@@ -321,10 +321,10 @@ def formatar_valores_grafico(fig):
 #baixaar planilha que tem a evolução do empenho
 def visualizar_empenhos_unicos():
     #teste local
-    df_raw = pd.read_excel('relatorio evolucao mes a mes.xlsx', skiprows=2)  # CSV convertido
+    #df_raw = pd.read_excel('relatorio evolucao mes a mes.xlsx', skiprows=2)  # CSV convertido
     #uso no git
     url_evol = "https://raw.githubusercontent.com/eduardo130796/gestao_contratos/main/relatorio%20evolucao%20mes%20a%20mes.xlsx"
-    df_raw = pd.read_excel(url_evol)
+    df_raw = pd.read_excel(url_evol, skiprows=2)
     # Define meses e tipos
     meses = ["JAN/2025", "FEV/2025", "MAR/2025", "ABR/2025","MAI/2025","JUN/2025","JUL/2025"]
     tipos = [
